@@ -69,32 +69,30 @@ const displayMovements = function (movements) {
     containerMovements.insertAdjacentHTML('afterbegin', html);
   });
 };
-displayMovements(account1.movements);
 
 const calcDisplayBalance = function (movements) {
   const balance = movements.reduce((acc, cur) => acc + cur, 0);
   labelBalance.textContent = `${balance} EUR`;
 };
-calcDisplayBalance(account1.movements);
 
-const calcDisplaySummary = function (movements) {
-  const incomes = movements
+const calcDisplaySummary = function (account) {
+  const incomes = account.movements
     .filter(mov => mov > 0)
     .reduce((acc, cur) => acc + cur, 0);
   labelSumIn.textContent = `${incomes}€`;
 
-  const out = movements
+  const out = account.movements
     .filter(mov => mov < 0)
     .reduce((acc, cur) => acc + cur, 0);
   labelSumOut.textContent = `${Math.abs(out)}€`;
 
-  const interest = movements
+  const interest = account.movements
     .filter(mov => mov > 0)
-    .map(deposit => (deposit * 1.2) / 100)
+    .map(deposit => (deposit * account.interestRate) / 100)
+    .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
   labelSumInterest.textContent = interest;
 };
-calcDisplaySummary(account1.movements);
 
 const createUsernames = function (accs) {
   accs.forEach(acc => {
@@ -106,3 +104,36 @@ const createUsernames = function (accs) {
   });
 };
 createUsernames(accounts);
+
+let currentAccount;
+
+btnLogin.addEventListener('click', function (e) {
+  //prevent form from submitting
+  e.preventDefault();
+
+  currentAccount = accounts.find(
+    acc => acc.username === inputLoginUsername.value
+  );
+  console.log(currentAccount);
+
+  if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    //Display UI and welcome message
+    labelWelcome.textContent = `Welcome back ${
+      currentAccount.owner.split(' ')[0]
+    }`;
+    containerApp.style.opacity = 100;
+
+    //Clear input fields
+    inputLoginUsername.value = inputLoginPin.value = ''; //will give both elements same value('')
+    inputLoginPin.blur(); //makes it loose focus
+
+    // display movements
+    displayMovements(currentAccount.movements);
+
+    //display balance
+    calcDisplayBalance(currentAccount.movements);
+
+    //display summary
+    calcDisplaySummary(currentAccount);
+  }
+});
