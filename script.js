@@ -71,7 +71,7 @@ const displayMovements = function (movements) {
 };
 
 const calcDisplayBalance = function (account) {
-  account.balance = movements.reduce((acc, cur) => acc + cur, 0);
+  account.balance = account.movements.reduce((acc, cur) => acc + cur, 0);
   labelBalance.textContent = `${account.balance} €`;
 };
 
@@ -110,7 +110,7 @@ const updateUI = function (acc) {
   displayMovements(acc.movements);
 
   //display balance
-  calcDisplayBalance(acc.movements);
+  calcDisplayBalance(acc);
 
   //display summary
   calcDisplaySummary(acc);
@@ -124,7 +124,6 @@ btnLogin.addEventListener('click', function (e) {
   currentAccount = accounts.find(
     acc => acc.username === inputLoginUsername.value
   );
-  console.log(currentAccount);
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     //Display UI and welcome message
@@ -142,7 +141,7 @@ btnLogin.addEventListener('click', function (e) {
 });
 
 btnTransfer.addEventListener('click', function (e) {
-  e.preventDefault; //use this when working forms to avoid default page reload when input to form
+  e.preventDefault(); //use this when working forms to avoid default page reload when input to form
   const amount = Number(inputTransferAmount.value);
   const receiverAcc = accounts.find(
     acc => acc.username === inputTransferTo.value
@@ -160,4 +159,23 @@ btnTransfer.addEventListener('click', function (e) {
 
     updateUI(currentAccount);
   }
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username
+    );
+    // DELETE ACCOUNT
+    accounts.splice(index, 1);
+
+    //HIDE UI
+    containerApp.style.opacity = 0;
+  }
+  inputClosePin.value = inputCloseUsername.value = '';
+  labelWelcome.textContent = 'Log in to get started';
 });
