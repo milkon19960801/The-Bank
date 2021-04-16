@@ -117,7 +117,6 @@ const updateUI = function (acc) {
 };
 
 let currentAccount;
-
 btnLogin.addEventListener('click', function (e) {
   //prevent form from submitting
   e.preventDefault();
@@ -138,6 +137,27 @@ btnLogin.addEventListener('click', function (e) {
     inputLoginUsername.value = inputLoginPin.value = ''; //will give both elements same value('')
     inputLoginPin.blur(); //makes it loose focus
     // UPDATE UI
+    updateUI(currentAccount);
+  }
+});
+
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault; //use this when working forms to avoid default page reload when input to form
+  const amount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find(
+    acc => acc.username === inputTransferTo.value
+  );
+  inputTransferAmount.value = inputTransferTo.value = '';
+
+  if (
+    amount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= amount &&
+    receiverAcc?.username !== currentAccount.username
+  ) {
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
     updateUI(currentAccount);
   }
 });
