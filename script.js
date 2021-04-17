@@ -63,17 +63,38 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-//CREATING DOM ELEMENTS
-const displayMovements = function (movements, sort = false) {
+const formatMovementDate = function (date) {
+  const calcDaysPassed = (date1, date2) =>
+    Math.round(Math.abs((date2 - date1) / (1000 * 60 * 60 * 24)));
+
+  const daysPassed = calcDaysPassed(new Date(), date);
+
+  if (daysPassed === 0) return 'Today';
+  if (daysPassed === 1) return 'Yesterday';
+  if (daysPassed <= 7) return `${daysPassed} days ago`;
+
+  const day = `${date.getDate()}`.padStart(2, 0);
+  const month = `${date.getMonth() + 1}`.padStart(2, 0);
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const displayMovements = function (account, sort = false) {
   containerMovements.innerHTML = '';
 
-  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+  const movs = sort
+    ? account.movements.slice().sort((a, b) => a - b)
+    : account.movements;
 
   movs.forEach(function (mov, i) {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
+
+    const date = new Date(account.movementsDates[i]);
+    const displayDate = formatMovementDate(date);
     const html = `
     <div class="movements__row">
     <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
+    <div class="movements__date">${displayDate}</div>
     <div class="movements__value">${mov.toFixed(2)}</div>
   </div>
   `;
@@ -102,7 +123,7 @@ const calcDisplaySummary = function (account) {
     .map(deposit => (deposit * account.interestRate) / 100)
     .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
-  labelSumInterest.textContent = interest.toFixed(2);
+  labelSumInterest.textContent = `${interest.toFixed(2)}€`;
 };
 
 const createUsernames = function (accs) {
@@ -118,7 +139,7 @@ createUsernames(accounts);
 
 const updateUI = function (acc) {
   // display movements
-  displayMovements(acc.movements);
+  displayMovements(acc);
 
   //display balance
   calcDisplayBalance(acc);
@@ -128,6 +149,7 @@ const updateUI = function (acc) {
 };
 
 let currentAccount;
+
 btnLogin.addEventListener('click', function (e) {
   //prevent form from submitting
   e.preventDefault();
@@ -137,15 +159,25 @@ btnLogin.addEventListener('click', function (e) {
   );
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
-    //Display UI and welcome message
+    //Display UI and message
     labelWelcome.textContent = `Welcome back ${
       currentAccount.owner.split(' ')[0]
     }`;
     containerApp.style.opacity = 100;
 
+    //Create current Date
+    const now = new Date();
+    const day = `${now.getDate()}`.padStart(2, 0);
+    const month = `${now.getMonth() + 1}`.padStart(2, 0);
+    const year = now.getFullYear();
+    const hour = `${now.getHours()}`.padStart(2, 0);
+    const minutes = `${now.getMinutes()}`.padStart(2, 0);
+    labelDate.textContent = `${day}/${month}/${year}, ${hour}:${minutes}`;
+
     //Clear input fields
-    inputLoginUsername.value = inputLoginPin.value = ''; //will give both elements same value('')
-    inputLoginPin.blur(); //makes it loose focus
+    inputLoginUsername.value = inputLoginPin.value = '';
+    inputLoginPin.blur(); //makes it's loose focus
+
     // UPDATE UI
     updateUI(currentAccount);
   }
@@ -165,19 +197,31 @@ btnTransfer.addEventListener('click', function (e) {
     currentAccount.balance >= amount &&
     receiverAcc?.username !== currentAccount.username
   ) {
+    // Doing the transfer
     currentAccount.movements.push(-amount);
     receiverAcc.movements.push(amount);
 
+    // add transfer date
+    currentAccount.movementsDates.push(new Date().toISOString());
+    receiverAcc.movementsDates.push(new Date().toISOString());
+    // Update UI
     updateUI(currentAccount);
   }
 });
 
 btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
+
   const amount = Math.floor(inputLoanAmount.value);
+
   if (amount > 0 && currentAccount.movements.some(mov => mov > amount * 0.1)) {
+    // Add movement
     currentAccount.movements.push(amount);
 
+    // add loan date
+    currentAccount.movementsDates.push(new Date().toISOString());
+
+    // Update UI
     updateUI(currentAccount);
   }
   inputLoanAmount.value = '';
@@ -185,6 +229,7 @@ btnLoan.addEventListener('click', function (e) {
 
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
+
   if (
     inputCloseUsername.value === currentAccount.username &&
     Number(inputClosePin.value) === currentAccount.pin
@@ -192,6 +237,7 @@ btnClose.addEventListener('click', function (e) {
     const index = accounts.findIndex(
       acc => acc.username === currentAccount.username
     );
+
     // DELETE ACCOUNT
     accounts.splice(index, 1);
 
@@ -205,6 +251,6 @@ btnClose.addEventListener('click', function (e) {
 let sorted = false;
 btnSort.addEventListener('click', function (e) {
   e.preventDefault();
-  displayMovements(currentAccount.movements, sorted);
+  displayMovements(currentAccount, sorted);
   sorted = !sorted;
 });
