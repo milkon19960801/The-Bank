@@ -197,6 +197,20 @@ const startLogOutTimer = function () {
   return timer;
 };
 
+const dateLabelTimer = function () {
+  const locale = currentAccount.locale;
+  const now = new Date();
+  const options = {
+    second: 'numeric',
+    minute: 'numeric',
+    hour: 'numeric',
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+  };
+  labelDate.textContent = new Intl.DateTimeFormat(locale, options).format(now);
+};
+
 let currentAccount, timer;
 
 btnLogin.addEventListener('click', function (e) {
@@ -215,22 +229,8 @@ btnLogin.addEventListener('click', function (e) {
     containerApp.style.opacity = 100;
 
     //Create current Date
-
-    setInterval(() => {
-      const locale = currentAccount.locale;
-      const now = new Date();
-      const options = {
-        second: 'numeric',
-        minute: 'numeric',
-        hour: 'numeric',
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric',
-      };
-      labelDate.textContent = new Intl.DateTimeFormat(locale, options).format(
-        now
-      );
-    }, 1000);
+    dateLabelTimer();
+    setInterval(dateLabelTimer, 1000);
 
     //Clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
